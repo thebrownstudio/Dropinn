@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drop Inn — Site Editor</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Inter', system-ui, sans-serif; background: #f7f4ef; display: flex; height: 100vh; overflow: hidden; color: #1a1a1a; font-size: 14px; }
+
+  /* ── Layout ── */
+  #sidebar { width: 320px; flex-shrink: 0; background: #fff; border-right: 1px solid #ede8e0; display: flex; flex-direction: column; overflow: hidden; }
+  #preview { flex: 1; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Sidebar header ── */
+  .sb-header { padding: 18px 20px 14px; border-bottom: 1px solid #ede8e0; }
+  .sb-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: #c9a882; }
+  .sb-brand { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #6b4c35; font-weight: 700; }
+  .sb-title { font-size: 19px; font-weight: 800; color: #1a1a1a; }
+  .sb-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+
+  /* ── File drop zone ── */
+  #drop-zone { margin: 16px; border: 2px dashed #c9a882; border-radius: 8px; padding: 24px 16px; text-align: center; cursor: pointer; transition: background .2s; }
+  #drop-zone:hover, #drop-zone.drag-over { background: #fdf8f2; }
+  #drop-zone .dz-icon { font-size: 26px; margin-bottom: 8px; }
+  #drop-zone p { font-size: 13px; color: #555; line-height: 1.5; margin-bottom: 12px; }
+  #drop-zone button { padding: 9px 18px; background: #3d2b1f; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .sb-tip { margin: 0 16px 12px; padding: 10px 12px; background: #faf8f3; border-radius: 6px; border: 1px solid #e8e0d5; font-size: 11px; color: #888; line-height: 1.6; }
+  .sb-tip strong { color: #6b4c35; }
+
+  /* ── Loaded banner ── */
+  #loaded-banner { padding: 10px 20px; background: #f0ebe2; border-bottom: 1px solid #e8e0d5; display: none; align-items: center; gap: 8px; }
+  #loaded-banner .lb-check { font-size: 16px; }
+  #loaded-banner .lb-title { font-size: 13px; font-weight: 700; color: #3d2b1f; }
+  #loaded-banner .lb-sub { font-size: 11px; color: #888; }
+
+  /* ── Tabs ── */
+  .tab-bar { padding: 8px 14px; border-bottom: 1px solid #ede8e0; display: flex; gap: 4px; }
+  .tab-btn { padding: 7px 14px; border-radius: 20px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; background: transparent; color: #888; transition: all .2s; position: relative; }
+  .tab-btn.active { background: #3d2b1f; color: #fff; }
+  .tab-badge { margin-left: 4px; background: #c9a882; color: #fff; border-radius: 10px; padding: 1px 5px; font-size: 10px; font-weight: 700; display: inline-block; }
+  .tab-btn.active .tab-badge { background: rgba(255,255,255,.3); }
+
+  /* ── Panel scroll area ── */
+  #panel { flex: 1; overflow-y: auto; padding: 6px 20px 16px; }
+
+  /* ── Group label ── */
+  .group-label { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: #aaa; font-weight: 700; margin: 14px 0 4px; }
+
+  /* ── Color swatch row ── */
+  .swatch-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,.05); }
+  .swatch-row input[type=color] { width: 34px; height: 34px; border: none; border-radius: 6px; cursor: pointer; padding: 2px; background: none; flex-shrink: 0; }
+  .swatch-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+  .swatch-hex { font-size: 11px; color: #999; font-family: monospace; }
+
+  /* ── Size slider ── */
+  .slider-row { padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,.05); }
+  .slider-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .slider-label { font-size: 13px; font-weight: 600; }
+  .slider-val { font-size: 12px; font-family: monospace; color: #6b4c35; font-weight: 700; }
+  input[type=range] { width: 100%; accent-color: #6b4c35; cursor: pointer; }
+  .slider-bounds { display: flex; justify-content: space-between; margin-top: 2px; font-size: 10px; color: #bbb; }
+
+  /* ── Image slots ── */
+  .img-slot { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,.05); }
+  .img-thumb { width: 50px; height: 38px; border-radius: 5px; overflow: hidden; background: #e8e0d5; flex-shrink: 0; cursor: pointer; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #bbb; transition: border-color .2s; }
+  .img-thumb.has-img { border: 2px solid #6b4c35; }
+  .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .img-meta { flex: 1; min-width: 0; }
+  .img-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .img-hint { font-size: 11px; color: #aaa; margin-top: 1px; }
+  .img-hint.replaced { color: #6b4c35; }
+  .img-actions { display: flex; gap: 4px; }
+  .btn-upload { font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid #c9a882; background: transparent; color: #6b4c35; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-clear { font-size: 11px; padding: 4px 7px; border-radius: 4px; border: 1px solid #e0d0c0; background: transparent; color: #aaa; cursor: pointer; }
+
+  /* ── Reset links ── */
+  .reset-btn { margin-top: 14px; font-size: 12px; color: #aaa; background: none; border: none; cursor: pointer; padding: 0; display: block; }
+  .reset-btn:hover { color: #6b4c35; }
+
+  /* ── Export footer ── */
+  .export-footer { padding: 14px 16px; border-top: 1px solid #ede8e0; background: #fff; }
+  #export-btn { width: 100%; padding: 12px 0; border-radius: 7px; border: none; cursor: pointer; background: #3d2b1f; color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .04em; transition: background .2s; }
+  #export-btn:disabled { background: #ccc; cursor: not-allowed; }
+  #export-btn:not(:disabled):hover { background: #5a3e30; }
+  #change-summary { font-size: 11px; color: #c9a882; text-align: center; margin-top: 7px; font-weight: 600; min-height: 16px; }
+
+  /* ── Preview cards ── */
+  .prev-card { background: #fff; border-radius: 10px; padding: 18px; border: 1px solid #ede8e0; }
+  .prev-card-title { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #aaa; font-weight: 700; margin-bottom: 10px; }
+
+  /* Color palette swatches */
+  #palette-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .palette-swatch { text-align: center; }
+  .palette-swatch .ps-box { width: 46px; height: 46px; border-radius: 7px; border: 1px solid rgba(0,0,0,.07); margin-bottom: 4px; }
+  .palette-swatch .ps-label { font-size: 9px; color: #999; max-width: 52px; line-height: 1.3; }
+
+  /* Type preview */
+  #type-prev-label { letter-spacing: .2em; text-transform: uppercase; font-family: monospace; margin-bottom: 3px; }
+  #type-prev-head { font-size: 38px; font-weight: 900; text-transform: uppercase; line-height: 1; font-family: Georgia, serif; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0ebe2; }
+  #type-prev-body { line-height: 1.75; color: #555; margin-bottom: 10px; }
+  #type-prev-tags { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+  .type-tag { font-family: monospace; letter-spacing: .14em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; font-size: 11px; }
+  #type-prev-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+  .type-card { border-radius: 4px; padding: 10px; }
+  .type-card-label { font-family: monospace; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 3px; }
+  .type-card-name { font-weight: 700; text-transform: uppercase; font-family: Georgia, serif; }
+
+  /* Section bg grid */
+  #section-bg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .section-swatch { border-radius: 6px; padding: 10px; border: 1px solid rgba(0,0,0,.05); }
+  .ss-label { font-size: 10px; margin-bottom: 2px; }
+  .ss-hex { font-size: 11px; font-family: monospace; font-weight: 700; }
+
+  /* Image overrides */
+  #img-overrides-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .io-thumb { text-align: center; }
+  .io-thumb img { width: 62px; height: 46px; object-fit: cover; border-radius: 5px; display: block; border: 2px solid #c9a882; }
+  .io-thumb span { font-size: 9px; color: #888; display: block; max-width: 68px; line-height: 1.3; margin-top: 3px; }
+
+  /* How to use */
+  #howto { background: #faf8f3; border-radius: 10px; padding: 18px; border: 1px solid #e8e0d5; }
+  #howto .prev-card-title { margin-bottom: 8px; }
+  #howto ol { font-size: 13px; color: #666; line-height: 1.9; padding-left: 18px; }
+
+  /* Panels hidden by default */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────────── -->
+<div id="sidebar">
+
+  <div class="sb-header">
+    <div class="sb-eyebrow"><div class="sb-dot"></div><span class="sb-brand">Drop Inn</span></div>
+    <div class="sb-title">Site Editor</div>
+    <div class="sb-sub">Adjust tokens, swap images, export.</div>
+  </div>
+
+  <!-- File upload -->
+  <div id="drop-zone">
+    <div class="dz-icon">📄</div>
+    <p>Upload <strong>drop-inn.html</strong> to begin editing</p>
+    <button onclick="document.getElementById('html-file-input').click()">Choose File</button>
+    <input type="file" id="html-file-input" accept=".html" style="display:none">
+  </div>
+  <p class="sb-tip"><strong>Tip:</strong> You can adjust all design tokens below without loading the file first — then upload to export.</p>
+
+  <div id="loaded-banner">
+    <div class="lb-check">✓</div>
+    <div><div class="lb-title">File loaded</div><div class="lb-sub">Ready to edit and export</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="colors" onclick="switchTab('colors')">
+      Colors <span class="tab-badge" id="badge-colors" style="display:none"></span>
+    </button>
+    <button class="tab-btn" data-tab="type" onclick="switchTab('type')">
+      Type <span class="tab-badge" id="badge-type" style="display:none"></span>
+    </button>
+    <button class="tab-btn" data-tab="images" onclick="switchTab('images')">
+      Images <span class="tab-badge" id="badge-images" style="display:none"></span>
+    </button>
+  </div>
+
+  <!-- Panel: Colors -->
+  <div id="panel" style="flex:1;overflow-y:auto;padding:6px 20px 8px;">
+
+    <div id="tab-colors" class="tab-panel active">
+      <div class="group-label">Backgrounds</div>
+      <div id="swatch-cream"></div>
+      <div id="swatch-warm"></div>
+
+      <div class="group-label">Brand Palette</div>
+      <div id="swatch-sand"></div>
+      <div id="swatch-bark"></div>
+      <div id="swatch-brown"></div>
+      <div id="swatch-hood"></div>
+
+      <div class="group-label">Text & Base</div>
+      <div id="swatch-charcoal"></div>
+      <div id="swatch-white"></div>
+
+      <div class="group-label">Location</div>
+      <div id="swatch-mapbg"></div>
+
+      <button class="reset-btn" onclick="resetColors()">↺ Reset colors to default</button>
+    </div>
+
+    <div id="tab-type" class="tab-panel">
+      <p style="font-size:12px;color:#aaa;margin:8px 0 4px;line-height:1.5;">Drag sliders to adjust font sizes across the site.</p>
+      <div id="sliders"></div>
+      <button class="reset-btn" onclick="resetSizes()">↺ Reset sizes to default</button>
+    </div>
+
+    <div id="tab-images" class="tab-panel">
+      <p style="font-size:12px;color:#aaa;margin:8px 0 8px;line-height:1.5;">Upload a replacement for any image slot. Originals are untouched until you export.</p>
+      <div id="image-slots"></div>
+      <button class="reset-btn" id="clear-images-btn" style="display:none" onclick="clearAllImages()">↺ Clear all image overrides</button>
+    </div>
+
+  </div>
+
+  <!-- Export footer -->
+  <div class="export-footer">
+    <button id="export-btn" disabled onclick="handleExport()">Export Updated HTML</button>
+    <div id="change-summary"></div>
+  </div>
+
+</div>
+
+<!-- ── Preview panel ────────────────────────────────────────────────────────── -->
+<div id="preview">
+
+  <div>
+    <h2 style="font-size:15px;font-weight:800;margin-bottom:3px;">Live Token Preview</h2>
+    <p style="font-size:12px;color:#aaa;">Reflects your current color and type settings.</p>
+  </div>
+
+  <!-- Palette -->
+  <div class="prev-card">
+    <div class="prev-card-title">Color Palette</div>
+    <div id="palette-grid"></div>
+  </div>
+
+  <!-- Type scale -->
+  <div class="prev-card">
+    <div class="prev-card-title">Type Scale Preview</div>
+    <div id="type-prev-label"></div>
+    <div id="type-prev-head">Headline Text</div>
+    <div id="type-prev-body">Body text — a reimagined roadside motel where surf, art, and culture show up in drops. Rooted in California's surf and skate ethos.</div>
+    <div id="type-prev-tags">
+      <span class="type-tag">Surf + Skate</span>
+      <span class="type-tag">16 Keys</span>
+      <span class="type-tag">Oceanside</span>
+    </div>
+    <div id="type-prev-cards">
+      <div class="type-card"><div class="type-card-label">Drop 01</div><div class="type-card-name">Music Events</div></div>
+      <div class="type-card"><div class="type-card-label">Drop 02</div><div class="type-card-name">Artist Merch</div></div>
+      <div class="type-card"><div class="type-card-label">Drop 03</div><div class="type-card-name">Food Pop Ups</div></div>
+    </div>
+  </div>
+
+  <!-- Section backgrounds -->
+  <div class="prev-card">
+    <div class="prev-card-title">Section Backgrounds</div>
+    <div id="section-bg-grid">
+      <div class="section-swatch" id="ss-cream"><div class="ss-label">Page BG</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-warm"><div class="ss-label">Section BG</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-brown"><div class="ss-label">Dark Section</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-hood"><div class="ss-label">Hood Section</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-charcoal"><div class="ss-label">Nav / Text</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-sand"><div class="ss-label">Accent</div><div class="ss-hex"></div></div>
+      <div class="section-swatch" id="ss-mapbg"><div class="ss-label">Map BG</div><div class="ss-hex"></div></div>
+    </div>
+  </div>
+
+  <!-- Image overrides (shown when any exist) -->
+  <div class="prev-card" id="img-overrides-card" style="display:none">
+    <div class="prev-card-title" id="img-overrides-title">Image Overrides</div>
+    <div id="img-overrides-grid"></div>
+  </div>
+
+  <!-- How to use -->
+  <div id="howto">
+    <div class="prev-card-title">How to use</div>
+    <ol>
+      <li>Upload <strong>drop-inn.html</strong> using the prompt in the sidebar</li>
+      <li>Adjust colors, font sizes, or swap images using the three tabs</li>
+      <li>Preview your token changes in the panels above</li>
+      <li>Click <strong>Export Updated HTML</strong> to download the modified file</li>
+      <li>Open the downloaded file in any browser — no server needed</li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const DEFAULT_COLORS = {
+  "--cream":    { label: "Page Background",    value: "#F2EDE4" },
+  "--warm":     { label: "Section Background", value: "#FAF8F3" },
+  "--sand":     { label: "Accent / Sand",      value: "#C9A882" },
+  "--bark":     { label: "Label / Tag",        value: "#6B4C35" },
+  "--brown":    { label: "Dark Section",       value: "#3D2B1F" },
+  "--hood":     { label: "Hood Section",       value: "#5A3E30" },
+  "--charcoal": { label: "Text / Nav",         value: "#1A1A1A" },
+  "--map-bg":   { label: "Map Background",     value: "#1A1A1A" },
+  "--white":    { label: "White",              value: "#ffffff" },
+};
+
+const DEFAULT_SIZES = {
+  "body-text":    { label: "Body Text",         value: 17, min: 12, max: 24, unit: "px", targets: [".intro-text p", ".dn-sub", ".drops-sub", ".hood-sub", "#place p", ".partner-card-desc", ".hood-card-desc"] },
+  "label-text":   { label: "Labels / Eyebrows", value: 12, min: 9,  max: 18, unit: "px", targets: [".section-label", ".eyebrow", ".tag", ".drop-card-label", ".inspo-label", ".footer-meta"] },
+  "card-title":   { label: "Card Titles",       value: 20, min: 14, max: 32, unit: "px", targets: [".drop-card-title", ".hood-card-name", ".partner-card-name", ".impact-val"] },
+  "list-text":    { label: "List / Table Text", value: 14, min: 10, max: 20, unit: "px", targets: [".mode-list li", "tbody td"] },
+  "mode-desc":    { label: "Italic Captions",   value: 16, min: 11, max: 22, unit: "px", targets: [".mode-desc", ".photo-divider-text p"] },
+  "table-header": { label: "Table Headers",     value: 11, min: 8,  max: 16, unit: "px", targets: ["thead th", ".fin-table-title", ".fin-stat-label"] },
+};
+
+const IMAGE_SLOTS = [
+  { id: "hero-bg",         label: "Hero Background",        hint: "Full-screen cover photo",     group: "Hero & Dividers" },
+  { id: "divider-1",       label: "Divider 1",              hint: "'No Vacancy' motel shot",     group: "Hero & Dividers" },
+  { id: "divider-2",       label: "Divider 2",              hint: "Aerial / location shot",      group: "Hero & Dividers" },
+  { id: "footer-wave",     label: "Footer Wave",            hint: "Closing ocean wave",          group: "Hero & Dividers" },
+  { id: "mosaic-1",        label: "Intro Mosaic — Main",    hint: "Blue van / exterior",         group: "Intro" },
+  { id: "mosaic-2",        label: "Intro Mosaic — Top",     hint: "Entrance door",               group: "Intro" },
+  { id: "mosaic-3",        label: "Intro Mosaic — Bottom",  hint: "Bedroom interior",            group: "Intro" },
+  { id: "community-1",     label: "Community — Left",       hint: "Lounge / fireplace",          group: "Community Space" },
+  { id: "community-2",     label: "Community — Centre",     hint: "Record player room",          group: "Community Space" },
+  { id: "community-3",     label: "Community — Right",      hint: "Listening session",           group: "Community Space" },
+  { id: "daynight-day",    label: "Day Mode Photo",         hint: "Coffee / vinyl café",         group: "Day / Night" },
+  { id: "daynight-night",  label: "Night Mode Photo",       hint: "Bar / listening room",        group: "Day / Night" },
+  { id: "drop-1",          label: "Drop 01 — Music",        hint: "Music events",                group: "Drops" },
+  { id: "drop-2",          label: "Drop 02 — Art",          hint: "Artist merch",                group: "Drops" },
+  { id: "drop-3",          label: "Drop 03 — Food",         hint: "Food pop up",                 group: "Drops" },
+  { id: "drop-4",          label: "Drop 04 — Merch",        hint: "Collectible merch",           group: "Drops" },
+  { id: "hood-1",          label: "Hood — Corner Pizza",    hint: "Pizza restaurant",            group: "The Hood" },
+  { id: "hood-2",          label: "Hood — Privateer",       hint: "Privateer bar",               group: "The Hood" },
+  { id: "hood-3",          label: "Hood — Wrench & Rodent", hint: "Seabasstropub",               group: "The Hood" },
+  { id: "hood-4",          label: "Hood — Pour House",      hint: "Pour House Oceanside",        group: "The Hood" },
+  { id: "map",             label: "Location Map",           hint: "LA → San Diego map",          group: "Location" },
+  { id: "inspo-1",         label: "Inspiration 1",          hint: "Hotel Joaquin room",          group: "Inspiration" },
+  { id: "inspo-2",         label: "Inspiration 2",          hint: "Hotel Joaquin detail",        group: "Inspiration" },
+  { id: "inspo-3",         label: "Inspiration 3",          hint: "Wildland",                    group: "Inspiration" },
+  { id: "inspo-4",         label: "Inspiration 4",          hint: "Little Victory",              group: "Inspiration" },
+  { id: "partner-brown",   label: "Partner — Brown Studio", hint: "Photo behind logo",           group: "Partners" },
+  { id: "partner-casetta", label: "Partner — Casetta",      hint: "Photo behind logo",           group: "Partners" },
+  { id: "partner-spark",   label: "Partner — SPARK",        hint: "Photo behind logo",           group: "Partners" },
+];
+
+const IMAGE_GROUPS = ["Hero & Dividers","Intro","Community Space","Day / Night","Drops","The Hood","Location","Inspiration","Partners"];
+
+let colors = JSON.parse(JSON.stringify(DEFAULT_COLORS));
+let sizes  = JSON.parse(JSON.stringify(DEFAULT_SIZES));
+let imageOverrides = {};
+let rawHtml = "";
+let htmlLoaded = false;
+let exportedOk = false;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  buildSwatches();
+  buildSliders();
+  buildImageSlots();
+  updatePreview();
+  updateBadges();
+
+  document.getElementById('html-file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      rawHtml = ev.target.result;
+      htmlLoaded = true;
+      document.getElementById('drop-zone').style.display = 'none';
+      document.querySelector('.sb-tip').style.display = 'none';
+      const banner = document.getElementById('loaded-banner');
+      banner.style.display = 'flex';
+      document.getElementById('export-btn').disabled = false;
+      updateBadges();
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  // Drag-and-drop on the drop zone
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.html')) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        rawHtml = ev.target.result; htmlLoaded = true;
+        dz.style.display = 'none';
+        document.querySelector('.sb-tip').style.display = 'none';
+        document.getElementById('loaded-banner').style.display = 'flex';
+        document.getElementById('export-btn').disabled = false;
+        updateBadges();
+      };
+      reader.readAsText(file);
+    }
+  });
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+}
+
+// ── Build color swatches ──────────────────────────────────────────────────────
+function buildSwatches() {
+  Object.entries(DEFAULT_COLORS).forEach(([key, def]) => {
+    const el = document.getElementById('swatch-' + key.replace(/^--/, '').replace(/-/g, ''));
+    if (!el) return;
+    el.innerHTML = `
+      <div class="swatch-row">
+        <input type="color" value="${colors[key].value}" data-key="${key}" onchange="onColorChange(this)">
+        <div>
+          <div class="swatch-name">${def.label}</div>
+          <div class="swatch-hex" id="hex-${key.replace(/^--/,'').replace(/-/g,'')}">${colors[key].value}</div>
+        </div>
+      </div>`;
+  });
+}
+
+function onColorChange(input) {
+  const key = input.dataset.key;
+  colors[key].value = input.value;
+  const hexId = 'hex-' + key.replace(/^--/,'').replace(/-/g,'');
+  const hexEl = document.getElementById(hexId);
+  if (hexEl) hexEl.textContent = input.value;
+  exportedOk = false;
+  updatePreview();
+  updateBadges();
+}
+
+function resetColors() {
+  colors = JSON.parse(JSON.stringify(DEFAULT_COLORS));
+  // Update all color inputs
+  Object.entries(colors).forEach(([key, { value }]) => {
+    const id = 'swatch-' + key.replace(/^--/,'').replace(/-/g,'');
+    const el = document.getElementById(id);
+    if (!el) return;
+    const inp = el.querySelector('input[type=color]');
+    if (inp) inp.value = value;
+    const hex = document.getElementById('hex-' + key.replace(/^--/,'').replace(/-/g,''));
+    if (hex) hex.textContent = value;
+  });
+  exportedOk = false;
+  updatePreview();
+  updateBadges();
+}
+
+// ── Build sliders ─────────────────────────────────────────────────────────────
+function buildSliders() {
+  const container = document.getElementById('sliders');
+  container.innerHTML = Object.entries(DEFAULT_SIZES).map(([key, s]) => `
+    <div class="slider-row">
+      <div class="slider-top">
+        <span class="slider-label">${s.label}</span>
+        <span class="slider-val" id="val-${key}">${sizes[key].value}${s.unit}</span>
+      </div>
+      <input type="range" min="${s.min}" max="${s.max}" value="${sizes[key].value}" data-key="${key}" data-unit="${s.unit}" oninput="onSizeChange(this)">
+      <div class="slider-bounds"><span>${s.min}${s.unit}</span><span>${s.max}${s.unit}</span></div>
+    </div>`).join('');
+}
+
+function onSizeChange(input) {
+  const key = input.dataset.key;
+  sizes[key].value = Number(input.value);
+  document.getElementById('val-' + key).textContent = input.value + input.dataset.unit;
+  exportedOk = false;
+  updatePreview();
+  updateBadges();
+}
+
+function resetSizes() {
+  sizes = JSON.parse(JSON.stringify(DEFAULT_SIZES));
+  document.querySelectorAll('#sliders input[type=range]').forEach(inp => {
+    const key = inp.dataset.key;
+    inp.value = sizes[key].value;
+    document.getElementById('val-' + key).textContent = sizes[key].value + inp.dataset.unit;
+  });
+  exportedOk = false;
+  updatePreview();
+  updateBadges();
+}
+
+// ── Build image slots ─────────────────────────────────────────────────────────
+function buildImageSlots() {
+  const container = document.getElementById('image-slots');
+  let html = '';
+  IMAGE_GROUPS.forEach(group => {
+    const slots = IMAGE_SLOTS.filter(s => s.group === group);
+    if (!slots.length) return;
+    html += `<div class="group-label">${group}</div>`;
+    slots.forEach(slot => {
+      html += `<div class="img-slot" id="slot-${slot.id}">
+        <div class="img-thumb" id="thumb-${slot.id}" onclick="triggerImageUpload('${slot.id}')">
+          <span>+</span>
+        </div>
+        <div class="img-meta">
+          <div class="img-name">${slot.label}</div>
+          <div class="img-hint" id="hint-${slot.id}">${slot.hint}</div>
+        </div>
+        <div class="img-actions">
+          <button class="btn-upload" onclick="triggerImageUpload('${slot.id}')">Upload</button>
+          <button class="btn-clear" id="clear-${slot.id}" style="display:none" onclick="clearImage('${slot.id}')">✕</button>
+        </div>
+        <input type="file" accept="image/*" id="file-${slot.id}" style="display:none" onchange="onImageUpload(this,'${slot.id}')">
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+function triggerImageUpload(id) {
+  document.getElementById('file-' + id).click();
+}
+
+function onImageUpload(input, id) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imageOverrides[id] = ev.target.result;
+    const thumb = document.getElementById('thumb-' + id);
+    thumb.innerHTML = `<img src="${ev.target.result}" alt="">`;
+    thumb.classList.add('has-img');
+    const hint = document.getElementById('hint-' + id);
+    hint.textContent = '✓ Replaced';
+    hint.classList.add('replaced');
+    const uploadBtn = document.querySelector(`#slot-${id} .btn-upload`);
+    if (uploadBtn) uploadBtn.textContent = 'Change';
+    document.getElementById('clear-' + id).style.display = '';
+    document.getElementById('clear-images-btn').style.display = '';
+    exportedOk = false;
+    updatePreview();
+    updateBadges();
+  };
+  reader.readAsDataURL(file);
+  input.value = "";
+}
+
+function clearImage(id) {
+  delete imageOverrides[id];
+  const slot = IMAGE_SLOTS.find(s => s.id === id);
+  const thumb = document.getElementById('thumb-' + id);
+  thumb.innerHTML = '<span>+</span>';
+  thumb.classList.remove('has-img');
+  const hint = document.getElementById('hint-' + id);
+  hint.textContent = slot ? slot.hint : '';
+  hint.classList.remove('replaced');
+  const uploadBtn = document.querySelector(`#slot-${id} .btn-upload`);
+  if (uploadBtn) uploadBtn.textContent = 'Upload';
+  document.getElementById('clear-' + id).style.display = 'none';
+  if (Object.keys(imageOverrides).length === 0) document.getElementById('clear-images-btn').style.display = 'none';
+  exportedOk = false;
+  updatePreview();
+  updateBadges();
+}
+
+function clearAllImages() {
+  Object.keys(imageOverrides).forEach(clearImage);
+}
+
+// ── Preview update ────────────────────────────────────────────────────────────
+function updatePreview() {
+  const c = colors;
+
+  // Palette grid
+  const palGrid = document.getElementById('palette-grid');
+  palGrid.innerHTML = Object.entries(c).map(([, {label, value}]) => `
+    <div class="palette-swatch">
+      <div class="ps-box" style="background:${value}"></div>
+      <div class="ps-label">${label}</div>
+    </div>`).join('');
+
+  // Type scale
+  document.getElementById('type-prev-label').style.cssText = `font-size:${sizes['label-text'].value}px;color:${c['--bark'].value};font-family:monospace;letter-spacing:.2em;text-transform:uppercase;margin-bottom:3px;`;
+  document.getElementById('type-prev-label').textContent = 'Section Label';
+  document.getElementById('type-prev-head').style.color = c['--charcoal'].value;
+  document.getElementById('type-prev-body').style.fontSize = sizes['body-text'].value + 'px';
+
+  document.querySelectorAll('.type-tag').forEach(t => {
+    t.style.border = `1px solid ${c['--bark'].value}`;
+    t.style.color = c['--bark'].value;
+    t.style.fontSize = sizes['label-text'].value + 'px';
+  });
+
+  document.querySelectorAll('.type-card').forEach(card => {
+    card.style.background = c['--cream'].value;
+  });
+  document.querySelectorAll('.type-card-label').forEach(el => {
+    el.style.fontSize = sizes['label-text'].value + 'px';
+    el.style.color = c['--bark'].value;
+  });
+  document.querySelectorAll('.type-card-name').forEach(el => {
+    el.style.fontSize = sizes['card-title'].value + 'px';
+    el.style.color = c['--charcoal'].value;
+  });
+
+  // Section backgrounds
+  const ssBg = [
+    { id:'ss-cream',    key:'--cream',    dark: false },
+    { id:'ss-warm',     key:'--warm',     dark: false },
+    { id:'ss-brown',    key:'--brown',    dark: true  },
+    { id:'ss-hood',     key:'--hood',     dark: true  },
+    { id:'ss-charcoal', key:'--charcoal', dark: true  },
+    { id:'ss-sand',     key:'--sand',     dark: false },
+    { id:'ss-mapbg',    key:'--map-bg',   dark: true  },
+  ];
+  ssBg.forEach(({ id, key, dark }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = c[key].value;
+    const label = el.querySelector('.ss-label');
+    const hex   = el.querySelector('.ss-hex');
+    const col = dark ? 'rgba(255,255,255,.5)' : '#888';
+    const colVal = dark ? '#fff' : '#333';
+    if (label) label.style.color = col;
+    if (hex) { hex.style.color = colVal; hex.textContent = c[key].value; }
+  });
+
+  // Image overrides
+  const count = Object.keys(imageOverrides).length;
+  const card = document.getElementById('img-overrides-card');
+  if (count > 0) {
+    card.style.display = '';
+    document.getElementById('img-overrides-title').textContent = `Image Overrides (${count})`;
+    document.getElementById('img-overrides-grid').innerHTML = Object.entries(imageOverrides).map(([id, src]) => {
+      const slot = IMAGE_SLOTS.find(s => s.id === id);
+      return `<div class="io-thumb"><img src="${src}" alt=""><span>${slot ? slot.label : id}</span></div>`;
+    }).join('');
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+// ── Badges & summary ──────────────────────────────────────────────────────────
+function updateBadges() {
+  const colorChanges = Object.entries(colors).filter(([k,v]) => v.value !== DEFAULT_COLORS[k]?.value).length;
+  const sizeChanges  = Object.entries(sizes).filter(([k,v]) => v.value !== DEFAULT_SIZES[k]?.value).length;
+  const imgCount     = Object.keys(imageOverrides).length;
+
+  setBadge('colors', colorChanges);
+  setBadge('type', sizeChanges);
+  setBadge('images', imgCount);
+
+  const parts = [
+    colorChanges && `${colorChanges} color${colorChanges>1?'s':''}`,
+    sizeChanges  && `${sizeChanges} size${sizeChanges>1?'s':''}`,
+    imgCount     && `${imgCount} image${imgCount>1?'s':''}`,
+  ].filter(Boolean);
+
+  const summary = document.getElementById('change-summary');
+  if (parts.length && htmlLoaded) {
+    summary.textContent = parts.join(', ') + ' changed';
+  } else if (exportedOk) {
+    summary.textContent = '✓ Downloaded!';
+  } else {
+    summary.textContent = '';
+  }
+}
+
+function setBadge(tab, count) {
+  const el = document.getElementById('badge-' + tab);
+  if (!el) return;
+  el.textContent = count;
+  el.style.display = count ? '' : 'none';
+}
+
+// ── Apply edits to HTML ───────────────────────────────────────────────────────
+function applyEditsToHtml(html) {
+  let out = html;
+
+  // 1. Colors — patch :root{} custom properties
+  out = out.replace(/:root\{([^}]+)\}/, (match, body) => {
+    let nb = body;
+    Object.entries(colors).forEach(([prop, { value }]) => {
+      nb = nb.replace(new RegExp(`(${prop.replace(/-/g,'\\-')}:\\s*)#[0-9a-fA-F]{3,8}`), `$1${value}`);
+    });
+    return `:root{${nb}}`;
+  });
+
+  // 2. Font sizes — inject override <style> block
+  const sizeCSS = Object.values(sizes).map(({ targets, value, unit }) =>
+    targets.map(sel => `${sel}{font-size:${value}${unit}!important;}`).join('')
+  ).join('\n');
+  out = out.replace('</style>', `/* editor overrides */\n${sizeCSS}\n</style>`);
+
+  // 3. Images
+  const altMap = {
+    "community-1":     "Community lounge",
+    "community-2":     "Record player",
+    "community-3":     "Evening listening",
+    "mosaic-1":        "Hotel exterior blue van",
+    "mosaic-2":        "Hotel entrance timber",
+    "mosaic-3":        "Hotel room interior",
+    "daynight-day":    "Day coffee hang",
+    "daynight-night":  "Night lounge bar",
+    "drop-1":          "Music events",
+    "drop-2":          "Artist merch",
+    "drop-3":          "Food pop up",
+    "drop-4":          "Collectible merch",
+    "hood-1":          "Corner Pizza",
+    "hood-2":          "Privateer",
+    "hood-3":          "Wrench and Rodent",
+    "hood-4":          "Pour House",
+    "map":             "LA to San Diego",
+    "inspo-1":         "Hotel Joaquin room",
+    "inspo-2":         "Hotel Joaquin interior",
+    "inspo-3":         "Wildland",
+    "inspo-4":         "Little Victory",
+    "partner-brown":   "The Brown Studio",
+    "partner-casetta": "Casetta hotel",
+    "partner-spark":   "SPARK gallery",
+    "footer-wave":     "Ocean wave",
+  };
+
+  Object.entries(imageOverrides).forEach(([slotId, b64]) => {
+    if (slotId === "hero-bg") {
+      out = out.replace(
+        /(<div class="hero-bg-img" style="background-image:url\(')([^']+)('\))/,
+        `$1${b64}$3`
+      );
+      return;
+    }
+
+    if (slotId === "divider-1" || slotId === "divider-2") {
+      const idx = slotId === "divider-1" ? 0 : 1;
+      let count = 0;
+      out = out.replace(
+        /(<img class="photo-divider-img" src=")([^"]+)(")/g,
+        (m, pre, src, post) => (count++ === idx ? `${pre}${b64}${post}` : m)
+      );
+      return;
+    }
+
+    const alt = altMap[slotId];
+    if (!alt) return;
+    // Replace src in <img> with matching alt text
+    const re = new RegExp(`(src=")data:image/[^"]+("(?:[^>]*)alt="[^"]*${alt.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`);
+    out = out.replace(re, `$1${b64}$2`);
+    // Fallback: alt first then src
+    const re2 = new RegExp(`src="(data:image[^"]+)"([^>]*alt="[^"]*${alt.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`);
+    out = out.replace(re2, `src="${b64}"$2`);
+  });
+
+  return out;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function handleExport() {
+  if (!rawHtml) return;
+  const btn = document.getElementById('export-btn');
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  setTimeout(() => {
+    const output = applyEditsToHtml(rawHtml);
+    const blob = new Blob([output], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'drop-inn-updated.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    btn.textContent = '✓ Downloaded!';
+    btn.disabled = false;
+    exportedOk = true;
+    document.getElementById('change-summary').textContent = '';
+    setTimeout(() => {
+      btn.textContent = 'Export Updated HTML';
+      updateBadges();
+    }, 2500);
+  }, 80);
+}
+
+init();
+</script>
+</body>
+</html>
