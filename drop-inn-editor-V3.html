@@ -364,6 +364,9 @@ const IMAGE_SLOTS = [
   { id: "partner-brown",   label: "Partner — Brown Studio", hint: "Photo behind logo",           group: "Partners" },
   { id: "partner-casetta", label: "Partner — Casetta",      hint: "Photo behind logo",           group: "Partners" },
   { id: "partner-spark",   label: "Partner — SPARK",        hint: "Photo behind logo",           group: "Partners" },
+  { id: "logo-brown",      label: "Logo — Brown Studio",    hint: "PNG logo overlay (transparent ok)", group: "Partners" },
+  { id: "logo-casetta",    label: "Logo — Casetta",         hint: "PNG logo overlay (transparent ok)", group: "Partners" },
+  { id: "logo-spark",      label: "Logo — SPARK",           hint: "PNG logo overlay (transparent ok)", group: "Partners" },
 ];
 
 const IMAGE_GROUPS = ["Hero & Dividers","Intro","Community Space","Day / Night","Drops","The Hood","Location","Inspiration","Partners"];
@@ -770,6 +773,16 @@ function applyEditsToHtml(html) {
       return;
     }
 
+    // Logo overlays — targeted by data-logo-id attribute
+    if (slotId.startsWith('logo-')) {
+      const logoId = slotId.replace('logo-', '');
+      out = out.replace(
+        new RegExp(`(<img[^>]*\\bdata-logo-id="${logoId}"[^>]*>)`),
+        match => match.replace(/src="[^"]*"/, `src="${b64}"`)
+      );
+      return;
+    }
+
     const alt = altMap[slotId];
     if (!alt) return;
     // Replace src in <img> with matching alt text
@@ -781,10 +794,18 @@ function applyEditsToHtml(html) {
   });
 
 
-  // 4. Document links — rebuild .doc-links content
+  // 4. Document links — rebuild .doc-links content (preserve original href when blank)
   const docLinksHtml = docLinks.map((l, i) => {
     const delay = (i * 0.06).toFixed(2);
-    const href = l.url ? l.url : '#';
+    let href = l.url;
+    if (!href) {
+      // Preserve the href already in the loaded file
+      const origTag = html.match(new RegExp('<a\\b[^>]*\\bdata-doc-id="' + l.id + '"[^>]*>'));
+      if (origTag) {
+        const m = origTag[0].match(/href="([^"]*)"/);
+        href = m ? m[1] : '#';
+      } else { href = '#'; }
+    }
     return `    <a href="${href}" class="doc-btn reveal" data-doc-id="${l.id}" style="transition-delay:${delay}s" target="_blank" rel="noopener noreferrer">${l.name}</a>`;
   }).join('\n');
   out = out.replace(
