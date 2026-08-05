@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Drop Inn | Boutique Hotel Oceanside</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Easing and Smooth Transitions */
+        :root {
+            --cb-fluid: cubic-bezier(0.25, 1, 0.5, 1); /* Premium swift-out easing */
+        }
+        
+        .smooth-transition {
+            transition: all 0.6s var(--cb-fluid);
+        }
+
+        /* Day/Night fluid theme morphing */
+        .day-mode {
+            background-color: #fcfbfa;
+            color: #1c1b1a;
+        }
+
+        .night-mode {
+            background-color: #0f0e0e;
+            color: #f3f1ed;
+        }
+
+        /* Hover scale effect with precise easing */
+        .hover-lift {
+            transition: transform 0.5s var(--cb-fluid), box-shadow 0.5s var(--cb-fluid);
+        }
+        .hover-lift:hover {
+            transform: translateY(-6px) scale(1.01);
+        }
+    </style>
+</head>
+<body class="day-mode smooth-transition font-sans antialiased">
+
+    <header class="fixed top-0 left-0 w-full z-50 mix-blend-difference px-8 py-6 flex justify-between items-center">
+        [span_1](start_span)<a href="#" class="text-white font-bold tracking-widest text-xl uppercase">The Drop Inn[span_1](end_span)</a>
+        <nav class="space-x-8 text-white uppercase text-xs tracking-wider font-medium hidden md:flex">
+            <a href="#concept" class="hover:opacity-70 transition-opacity">Concept</a>
+            <a href="#space" class="hover:opacity-70 transition-opacity">The Space</a>
+            <a href="#hood" class="hover:opacity-70 transition-opacity">The Hood</a>
+            <button onclick="toggleDayNight()" class="border border-white px-3 py-1 rounded-full hover:bg-white hover:text-black smooth-transition">Toggle Day/Night</button>
+        </nav>
+    </header>
+
+    <section class="h-screen w-full flex flex-col justify-center items-center text-center px-4 bg-[#f4f1ea] relative overflow-hidden smooth-transition" id="hero-bg">
+        <div class="z-10 max-w-4xl">
+            [span_2](start_span)<p class="uppercase tracking-widest text-xs mb-3 font-semibold text-stone-500">Casa Victoria • Oceanside, California[span_2](end_span)</p>
+            [span_3](start_span)<h1 class="text-6xl md:text-8xl font-black tracking-tight uppercase leading-none mb-6">THE DROP INN[span_3](end_span)</h1>
+            <p class="text-lg md:text-xl font-medium text-stone-700 max-w-2xl mx-auto leading-relaxed">
+                [span_4](start_span)A 16-room, no-frills, all-style California hotel built for today's nomads[span_4](end_span).
+            </p>
+        </div>
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-xs uppercase tracking-widest opacity-60">
+            Scroll to Explore
+        </div>
+    </section>
+
+    <section id="concept" class="py-24 px-8 md:px-24 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        <div>
+            <h2 class="text-xs uppercase tracking-widest text-stone-400 font-bold mb-4">The Ethos</h2>
+            [span_5](start_span)<h3 class="text-3xl md:text-4xl uppercase font-black tracking-tight mb-6">Drops—Not Presets[span_5](end_span)</h3>
+            <p class="text-lg leading-relaxed mb-6 opacity-80">
+                [span_6](start_span)Welcome to a reimagined roadside motel where surf, art, and culture show up dynamically[span_6](end_span). [span_7](start_span)Rooted deeply in California’s authentic surf and skate culture, we swap out traditional stuffy luxury for a dialed, hyper-local stream of creative energy[span_7](end_span).
+            </p>
+            <blockquote class="border-l-4 border-stone-800 pl-4 italic opacity-90 my-4">
+                [span_8](start_span)"Nestled fluidly between Los Angeles and San Diego, inside a coastal town vibrating with history and distinct personality[span_8](end_span)."
+            </blockquote>
+        </div>
+        <div class="bg-stone-100 p-8 rounded-2xl border border-stone-200/60 hover-lift shadow-sm text-stone-900">
+            [span_9](start_span)<h4 class="font-bold uppercase tracking-wider text-sm mb-4">Community Space Concept[span_9](end_span)</h4>
+            <p class="text-sm opacity-80 mb-4">
+                This isn't a traditional static hotel lobby. [span_10](start_span)It’s a living, rotating cultural node[span_10](end_span). 
+            </p>
+            <ul class="space-y-2 text-sm font-semibold uppercase tracking-wide">
+                [span_11](start_span)<li>• Part Art Gallery[span_11](end_span)</li>
+                [span_12](start_span)<li>• Part Hangout Hub[span_12](end_span)</li>
+                [span_13](start_span)<li>• Part Dedicated Listening Room[span_13](end_span)</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="space" class="py-20 bg-stone-900 text-stone-100 smooth-transition" id="fluid-zone">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="mb-12 text-center">
+                [span_14](start_span)<h2 class="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Operational Fluidity[span_14](end_span)</h2>
+                [span_15](start_span)<h3 class="text-4xl font-black uppercase tracking-tight">Day & Night Identities[span_15](end_span)</h3>
+                [span_16](start_span)<p class="text-sm opacity-60 mt-2">Instead of overcomplicating hotel operations, we shift smoothly between modes[span_16](end_span).</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-stone-800/50 border border-stone-700/50 p-10 rounded-2xl hover-lift">
+                    <span class="text-xs uppercase bg-amber-400 text-stone-950 font-bold px-3 py-1 rounded-full">Day Mode</span>
+                    [span_17](start_span)<h4 class="text-2xl font-bold uppercase tracking-tight mt-4 mb-3">Coffee & Creative Hang[span_17](end_span)</h4>
+                    [span_18](start_span)<p class="text-sm opacity-70 mb-6">"I could sit here for 2 hours and not feel like I'm trapped inside a hotel[span_18](end_span)."</p>
+                    <ul class="space-y-2 text-sm opacity-90">
+                        [span_19](start_span)<li><strong>✓ Simple Coffee Bar:</strong> Stripped-back, artisan quality focused on pure perfection[span_19](end_span).</li>
+                        [span_20](start_span)<li><strong>✓ Workspace Alternative:</strong> Relaxed layout engineered for focus or casual hangouts[span_20](end_span).</li>
+                        [span_21](start_span)<li><strong>✓ Recreational Breaks:</strong> Table tennis/ping pong available for layout resets[span_21](end_span).</li>
+                    </ul>
+                </div>
+
+                <div class="bg-stone-800/50 border border-stone-700/50 p-10 rounded-2xl hover-lift">
+                    <span class="text-xs uppercase bg-purple-500 text-white font-bold px-3 py-1 rounded-full">Night Mode</span>
+                    [span_22](start_span)<h4 class="text-2xl font-bold uppercase tracking-tight mt-4 mb-3">The Drop Inn Lounge[span_22](end_span)</h4>
+                    [span_23](start_span)<p class="text-sm opacity-70 mb-6">A curated sensory escape—never a bar trying to look intentionally busy[span_23](end_span).</p>
+                    <ul class="space-y-2 text-sm opacity-90">
+                        [span_24](start_span)<li><strong>✓ Hidden Speakeasy Energy:</strong> A SoCal realization of a classic intimate NYC speakeasy[span_24](end_span).</li>
+                        [span_25](start_span)<li><strong>✓ Sound First:</strong> Lights dialed down, custom audio turned up in a highly sound-treated atmosphere[span_25](end_span).</li>
+                        [span_26](start_span)<li><strong>✓ Curated Drops:</strong> Digital listening sessions, BYOB policies, and select boutique brand launches[span_26](end_span).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hood" class="py-24 px-8 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            [span_27](start_span)<h2 class="text-xs uppercase tracking-widest text-stone-400 font-bold mb-2">The Hood[span_27](end_span)</h2>
+            [span_28](start_span)<h3 class="text-4xl font-black uppercase tracking-tight">South Oceanside Ecosystem[span_28](end_span)</h3>
+            [span_29](start_span)<p class="text-base opacity-75 max-w-xl mx-auto mt-2">An eclectic, humming community of highly independent local businesses highlighting the true art of coastal living[span_29](end_span).</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="p-6 border border-stone-200 rounded-xl smooth-transition hover-lift shadow-2xs">
+                [span_30](start_span)<h4 class="font-bold uppercase tracking-tight text-lg">Captains Helm[span_30](end_span)</h4>
+                [span_31](start_span)<p class="text-xs opacity-60 uppercase tracking-widest my-1">Ethos & Style[span_31](end_span)</p>
+                [span_32](start_span)<p class="text-sm opacity-80 mt-2">Capturing the highly specific style and unique design language of the modern neighborhood[span_32](end_span).</p>
+            </div>
+            <div class="p-6 border border-stone-200 rounded-xl smooth-transition hover-lift shadow-2xs">
+                [span_33](start_span)<h4 class="font-bold uppercase tracking-tight text-lg">Shoots[span_33](end_span)</h4>
+                [span_34](start_span)<p class="text-xs opacity-60 uppercase tracking-widest my-1">Social Hangout[span_34](end_span)</p>
+                [span_35](start_span)<p class="text-sm opacity-80 mt-2">A beautiful coastal space carefully styled to look and feel like an intimate backyard hang[span_35](end_span).</p>
+            </div>
+            <div class="p-6 border border-stone-200 rounded-xl smooth-transition hover-lift shadow-2xs">
+                [span_36](start_span)<h4 class="font-bold uppercase tracking-tight text-lg">Merenda[span_36](end_span)</h4>
+                [span_37](start_span)<p class="text-xs opacity-60 uppercase tracking-widest my-1">Craft Cuisine[span_37](end_span)</p>
+                [span_38](start_span)<p class="text-sm opacity-80 mt-2">Finely curated menus showcasing hyper-local seasonal ingredients from neighborhood restaurants[span_38](end_span).</p>
+            </div>
+            <div class="p-6 border border-stone-200 rounded-xl smooth-transition hover-lift shadow-2xs">
+                [span_39](start_span)<h4 class="font-bold uppercase tracking-tight text-lg">Pourhouse[span_39](end_span)</h4>
+                [span_40](start_span)<p class="text-xs opacity-60 uppercase tracking-widest my-1">Live Sound[span_40](end_span)</p>
+                [span_41](start_span)<p class="text-sm opacity-80 mt-2">The operational physical space reserved to honor and amplify the native neighborhood soundscape[span_41](end_span).</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-stone-950 text-stone-400 text-xs py-16 px-8 border-t border-stone-900">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div>
+                [span_42](start_span)<p class="font-bold uppercase text-stone-200 mb-2">The Partners[span_42](end_span)</p>
+                [span_43](start_span)<p class="mb-1"><strong>Design & Development:</strong> The Brown Studio[span_43](end_span)</p>
+                [span_44](start_span)<p class="mb-1"><strong>Hospitality Management:</strong> Casetta[span_44](end_span)</p>
+                [span_45](start_span)<p class="mb-1"><strong>Branding & Marketing:</strong> Spark[span_45](end_span)</p>
+            </div>
+            <div class="md:text-right">
+                <p class="uppercase font-bold tracking-widest text-stone-200 mb-2">Drop a Line</p>
+                [span_46](start_span)<a href="mailto:info@thebrownstudio.com" class="text-stone-300 hover:text-white underline smooth-transition">info@thebrownstudio.com[span_46](end_span)</a>
+                <p class="mt-4 opacity-40">© 2026 The Drop Inn. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleDayNight() {
+            const body = document.body;
+            const heroBg = document.getElementById('hero-bg');
+            
+            if(body.classList.contains('day-mode')) {
+                body.classList.replace('day-mode', 'night-mode');
+                heroBg.style.backgroundColor = '#151413';
+            } else {
+                body.classList.replace('night-mode', 'day-mode');
+                heroBg.style.backgroundColor = '#f4f1ea';
+            }
+        }
+    </script>
+</body>
+</html>
